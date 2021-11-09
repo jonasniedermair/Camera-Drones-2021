@@ -2,25 +2,24 @@
 
 ## Setup Project
 
-### 1.) Create catkin workspace
+1.) Create catkin workspace
 ```
 mkdir -p ~/camera_drones_ws/src   
 cd ~/camera_drones_ws/
 catkin build
 ```
 
-### 2.) Clone Repository into "src" folder
+2.) Clone repository into "src" folder
 ```
 cd ~/camera_drones_ws/src
 git clone git@github.com:jonasniedermair/Camera-Drones-2021.git
 ```
 
-## 3.) Install required dependencies
+3.) Install required dependencies
 ```
 sudo apt install ros-melodic-octomap-ros
 ```
-
-### 4.) Build packages
+4.) Build packages
 ```
 cd ~/camera_drones_ws
 catkin build
