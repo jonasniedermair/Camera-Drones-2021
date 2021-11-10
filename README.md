@@ -26,6 +26,8 @@ catkin build
 ```
 
 ## Run 1. Assignment
+To run the 1. Assignment execute these commands in seperate terminal windows (Dont forget to source your workspace "source devel/setup.bash").
+
 Run astra_camera:
 ```
 roslaunch astra_camera astra.launch load_driver:=false publish_tf:=true
@@ -44,6 +46,13 @@ rviz
 Play rosbag (Can be downloaded here: https://files.icg.tugraz.at/f/fb3643f14540402895d5/)
 ```
 rosbag play [rosbag]
+```
+
+After executing these commands, you should see the creation of the octomap in RViz.
+
+You can save the created octomap as binary, by executing the command:
+```
+rosrun octomap_server octomap_saver -f octomap.bt
 ```
 
 
