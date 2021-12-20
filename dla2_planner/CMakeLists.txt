@@ -35,8 +35,8 @@ SET( EXTRA_LIBS
 )
 
 find_package(cmake_modules REQUIRED)
-find_package(Eigen) 
-find_package(Eigen3) 
+find_package(Eigen)
+find_package(Eigen3)
 
 include_directories(
   ${catkin_INCLUDE_DIRS}
@@ -53,6 +53,8 @@ include_directories(
 
 # ompl
 find_package(ompl REQUIRED)
+find_package(dynamicEDT3D REQUIRED)
+
 #   checking ompl cmake variables while running: "catkin build"
 # message(WARNING "OMPL_INCLUDE_DIRS: " ${OMPL_INCLUDE_DIRS})
 # message(WARNING "OMPL_LIBRARY_DIR: " ${OMPL_LIBRARY_DIR})
@@ -112,6 +114,25 @@ target_link_libraries(${PROJECT_NAME}_ros_node
     ${EXTRA_LIBS}
 )
 # -----------------------------
+
+# --- exampleEDTOctomap ---
+
+find_package(dynamicEDT3D REQUIRED)
+find_package(ompl REQUIRED)
+find_package(octomap REQUIRED)
+link_directories(${OMPL_LIBRARY_DIRS})
+
+add_executable(${PROJECT_NAME}_exampleEDTOctomap
+		src/exampleEDTOctomap.cpp)
+include_directories(${OCTOMAP_INCLUDE_DIRS})
+include_directories(${DYNAMICEDT3D_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME}_exampleEDTOctomap
+		${EXTRA_LIBS}
+		${OMPL_LIBRARIES}
+		${DYNAMICEDT3D_LIBRARIES}
+		${OCTOMAP_LIBRARIES}
+        )
+# --------------------------------
 
 # --- trajectory visualization --- 
 set(${PROJECT_NAME}_trajectory_visualization_ROS_NODE_SOURCES

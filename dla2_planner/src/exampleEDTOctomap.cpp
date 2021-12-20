@@ -43,6 +43,28 @@
 
 #include <iostream>
 
+void send_current_marker(ros::NodeHandle &nh, ros::Publisher &vis_pub, visualization_msgs::Marker &marker,
+                       const geometry_msgs::Point &point) {
+  vis_pub = nh.advertise<visualization_msgs::Marker>("marker_current", 0);
+  marker.header.frame_id = "world";
+  marker.header.stamp = ros::Time();
+  marker.id = 1;
+  marker.type = visualization_msgs::Marker::SPHERE;
+  marker.action = visualization_msgs::Marker::ADD;
+  marker.pose.position = point;
+  marker.pose.orientation.x = 0.0;
+  marker.pose.orientation.y = 0.0;
+  marker.pose.orientation.z = 0.0;
+  marker.pose.orientation.w = 1.0;
+  marker.scale.x = 0.3;
+  marker.scale.y = 0.3;
+  marker.scale.z = 0.3;
+  marker.color.a = 1.0; // Don't forget to set the alpha!
+  marker.color.r = 0.0;
+  marker.color.g = 0.0;
+  marker.color.b = 1.0;
+  vis_pub.publish(marker);
+}
 
 void send_start_marker(ros::NodeHandle &nh, ros::Publisher &vis_pub, visualization_msgs::Marker &marker,
                        const geometry_msgs::Point &point) {
@@ -57,9 +79,9 @@ void send_start_marker(ros::NodeHandle &nh, ros::Publisher &vis_pub, visualizati
   marker.pose.orientation.y = 0.0;
   marker.pose.orientation.z = 0.0;
   marker.pose.orientation.w = 1.0;
-  marker.scale.x = 0.5;
-  marker.scale.y = 0.5;
-  marker.scale.z = 0.5;
+  marker.scale.x = 0.3;
+  marker.scale.y = 0.3;
+  marker.scale.z = 0.3;
   marker.color.a = 1.0; // Don't forget to set the alpha!
   marker.color.r = 1.0;
   marker.color.g = 0.0;
@@ -80,9 +102,9 @@ void send_end_marker(ros::NodeHandle &nh, ros::Publisher &vis_pub, visualization
   marker.pose.orientation.y = 0.0;
   marker.pose.orientation.z = 0.0;
   marker.pose.orientation.w = 1.0;
-  marker.scale.x = 0.5;
-  marker.scale.y = 0.5;
-  marker.scale.z = 0.5;
+  marker.scale.x = 0.3;
+  marker.scale.y = 0.3;
+  marker.scale.z = 0.3;
   marker.color.a = 1.0; // Don't forget to set the alpha!
   marker.color.r = 0.0;
   marker.color.g = 1.0;
@@ -144,7 +166,7 @@ int main(int argc, char *argv[]) {
   }
   //if you modify the octree via tree->insertScan() or tree->updateNode()
   //just call distmap.update() again to adapt the distance map to the changes made
-  
+
   ROS_INFO("Checking input arguments!");
   ROS_INFO_STREAM("argc: " << argc);
   for (int i = 0; i < argc; i++) {
@@ -170,9 +192,14 @@ int main(int argc, char *argv[]) {
   auto end_position = start_position;
   end_position.x = 24.3;
 
+  auto current_position = start_position;
+  current_position.x = 20.3;
+
   while (true) {
     send_start_marker(nh, vis_pub, marker, start_position);
     send_end_marker(nh, vis_pub, marker, end_position);
+
+    send_current_marker(nh, vis_pub, marker, current_position);
     ros::spinOnce();
   }
 
