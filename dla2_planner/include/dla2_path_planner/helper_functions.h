@@ -107,7 +107,7 @@ public:
 class PathLengthOptimizationObjectiveZPenalized : public ompl::base::OptimizationObjective
 {
 public:
-    PathLengthOptimizationObjectiveZPenalized(const ompl::base::SpaceInformationPtr &si) : 
+    PathLengthOptimizationObjectiveZPenalized(const ompl::base::SpaceInformationPtr &si) :
         ompl::base::OptimizationObjective(si) {
         description_ = "Path Length - Z Penalized";
         // Setup a default cost-to-go heuristics:
@@ -115,11 +115,20 @@ public:
     }
 
     ompl::base::Cost stateCost(const ompl::base::State *s) const override {
-        return identityCost();
+      return identityCost();
     }
 
     ompl::base::Cost motionCost(const ompl::base::State *s1, const ompl::base::State *s2) const override {
-	return ompl::base::Cost(si_->distance(s1, s2));
+      const auto *p1 = s1->as<ob::RealVectorStateSpace::StateType>()->values;
+      const auto *p2 = s2->as<ob::RealVectorStateSpace::StateType>()->values;
+
+      float cost{};
+      for (int i = 0; i < 2; i++) {
+        cost += (p2[i] - p1[i]) * (p2[i] - p1[i]);
+      }
+      cost += 100.0f * (p2[2] - p1[2]) * (p2[2] - p1[2]);
+
+      return ompl::base::Cost(std::sqrt(cost));
     }
 
     ompl::base::Cost motionCostHeuristic(const ompl::base::State *s1, const ompl::base::State *s2) const override  {

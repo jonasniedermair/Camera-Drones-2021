@@ -48,35 +48,34 @@
 
 #include <fstream>
 
-class DLA2PathPlanner
-{
+class DLA2PathPlanner {
 public:
-    DLA2PathPlanner(ros::NodeHandle &n, ros::NodeHandle &pn, int argc, char** argv);
-    ~DLA2PathPlanner();
+  DLA2PathPlanner(ros::NodeHandle &n, ros::NodeHandle &pn, int argc, char **argv);
+  ~DLA2PathPlanner();
 
 private:
-    ros::NodeHandle &pnode_;
-    ros::NodeHandle &node_;
+  ros::NodeHandle &pnode_;
+  ros::NodeHandle &node_;
 
-    // parsed arguments
-    double runTime;
-    optimalPlanner plannerType;
-    planningObjective objectiveType;
-    std::string outputFile;
+  // parsed arguments
+  double runTime;
+  optimalPlanner plannerType;
+  planningObjective objectiveType;
+  std::string outputFile;
 
-    void plan();
+  void plan();
 
-    // ROS Topics
-    ros::Subscriber current_position_sub;
-    ros::Subscriber goal_position_sub;
-    ros::Publisher trajectory_pub;
-    void currentPositionCallback(const mav_planning_msgs::Point2D::ConstPtr& p_msg);
-    void goalPositionCallback(const mav_planning_msgs::Point2D::ConstPtr& p_msg);
-    void convertOMPLPathToMsg();
-    mav_planning_msgs::Point2D current_position, goal_position;
-    bool traj_planning_successful;
-    std::shared_ptr<ompl::geometric::PathGeometric> p_last_traj_ompl;
-    mav_planning_msgs::PolynomialTrajectory4D last_traj_msg;
+  // ROS Topics
+  ros::Subscriber current_position_sub;
+  ros::Subscriber goal_position_sub;
+  ros::Publisher trajectory_pub;
+  void currentPositionCallback(const mav_planning_msgs::Point2D::ConstPtr &p_msg);
+  void goalPositionCallback(const mav_planning_msgs::Point2D::ConstPtr &p_msg);
+  void convertOMPLPathToMsg();
+  mav_planning_msgs::Point2D current_position, goal_position;
+  bool traj_planning_successful;
+  std::shared_ptr<ompl::geometric::PathGeometric> p_last_traj_ompl;
+  mav_planning_msgs::PolynomialTrajectory4D last_traj_msg;
 };
 
 #endif // DLA2_PATH_PLANNER_H_
