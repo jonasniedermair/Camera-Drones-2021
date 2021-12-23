@@ -217,9 +217,7 @@ struct DLA3PathPlanner {
     current_position_sub = pnode_.subscribe("current_position", 10, &DLA3PathPlanner::currentPositionCallback, this);
     goal_position_sub = pnode_.subscribe("goal_position", 10, &DLA3PathPlanner::goalPositionCallback, this);
     trajectory_pub = pnode_.advertise<mav_planning_msgs::PolynomialTrajectory4D>("planned_trajectory", 1);
-
-
-    trajectory_pub = pnode_.advertise<visualization_msgs::Marker>("planned_trajectory", 0);
+    trajectory_marker_pub = pnode_.advertise<visualization_msgs::Marker>("planned_trajectory_marker", 0);
   }
 
   inline void plan() {
@@ -310,6 +308,7 @@ struct DLA3PathPlanner {
   ros::Subscriber current_position_sub;
   ros::Subscriber goal_position_sub;
   ros::Publisher trajectory_pub;
+  ros::Publisher trajectory_marker_pub;
 
   void currentPositionCallback(const geometry_msgs::Point::ConstPtr &p_msg) {
     current_position = *p_msg;
@@ -359,7 +358,7 @@ struct DLA3PathPlanner {
       segment.yaw.push_back(yaw_s);
       msg.segments.push_back(segment);
     }
-    trajectory_pub.publish(marker);
+    trajectory_marker_pub.publish(marker);
   }
 };
 
