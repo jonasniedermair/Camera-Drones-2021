@@ -52,6 +52,7 @@
 #include <ompl/base/StateValidityChecker.h>
 #include <dla2_path_planner/helper_functions.h>
 #include "visualization_msgs/MarkerArray.h"
+#include <mav_planning_msgs/PolynomialTrajectory4D.h>
 
 #include <iostream>
 #include <utility>
@@ -199,6 +200,11 @@ struct DLA3PathPlanner {
   DynamicEDTOctomap *distmap;
   octomap::OcTree *tree;
 
+  geometry_msgs::Point current_position, goal_position;
+  bool traj_planning_successful{};
+  std::shared_ptr<ompl::geometric::PathGeometric> p_last_traj_ompl;
+  mav_planning_msgs::PolynomialTrajectory4D last_traj_msg;
+
   DLA3PathPlanner(ros::NodeHandle &Pnode,
                   ros::NodeHandle &Node,
                   double RunTime,
@@ -208,10 +214,14 @@ struct DLA3PathPlanner {
       : pnode_(Pnode), node_(Node), runTime(RunTime),
         outputFile(std::move(OutputFile)), distmap(distmap),
         tree(tree) {
+    current_position_sub = pnode_.subscribe("current_position", 10, &DLA3PathPlanner::currentPositionCallback, this);
+    goal_position_sub = pnode_.subscribe("goal_position", 10, &DLA3PathPlanner::goalPositionCallback, this);
+    trajectory_pub = pnode_.advertise<mav_planning_msgs::PolynomialTrajectory4D>("planned_trajectory", 1);
+
+
     trajectory_pub = pnode_.advertise<visualization_msgs::Marker>("planned_trajectory", 0);
   }
 
-  // TODO
   inline void plan() {
     // Construct the robot state space in which we're planning. We're
     // planning in [min,max]x[min,max]x[min,max], a subset of R^3.
@@ -222,7 +232,7 @@ struct DLA3PathPlanner {
     double maxX, maxY, maxZ;
     tree->getMetricMax(maxX, maxY, maxZ);
 
-    // Set the bounds of space to be in [0,1].
+    // Set the bounds of space to be in [min, max].
     space->setBounds(std::min(std::min(minX, minY), minZ), std::max(std::max(maxX, maxY), maxZ));
 
     // Construct a space information instance for this state space
@@ -233,15 +243,11 @@ struct DLA3PathPlanner {
 
     si->setup();
 
-    // Set our robot's starting state to be the bottom-left corner of
-    // the environment, or (0,0).
     ob::ScopedState<> start(space);
     start->as<ob::RealVectorStateSpace::StateType>()->values[0] = current_position.x;
     start->as<ob::RealVectorStateSpace::StateType>()->values[1] = current_position.y;
     start->as<ob::RealVectorStateSpace::StateType>()->values[2] = current_position.z;
 
-    // Set our robot's goal state to be the top-right corner of the
-    // environment, or (1,1).
     ob::ScopedState<> goal(space);
     goal->as<ob::RealVectorStateSpace::StateType>()->values[0] = goal_position.x;
     goal->as<ob::RealVectorStateSpace::StateType>()->values[1] = goal_position.y;
@@ -304,8 +310,26 @@ struct DLA3PathPlanner {
   ros::Subscriber current_position_sub;
   ros::Subscriber goal_position_sub;
   ros::Publisher trajectory_pub;
-  void currentPositionCallback(const geometry_msgs::Point::ConstPtr &p_msg);
-  void goalPositionCallback(const geometry_msgs::Point::ConstPtr &p_msg);
+
+  void currentPositionCallback(const geometry_msgs::Point::ConstPtr &p_msg) {
+    current_position = *p_msg;
+    ROS_INFO_STREAM("New current position, x: " << current_position.x << "; y: " << current_position.y);
+  }
+
+  void goalPositionCallback(const geometry_msgs::Point::ConstPtr &p_msg) {
+    goal_position = *p_msg;
+    ROS_INFO_STREAM("New goal position, x: " << goal_position.x << "; y: " << goal_position.y);
+
+    plan();
+
+    if (traj_planning_successful) {
+      sendLastMessage();
+      mav_planning_msgs::PolynomialTrajectory4D::Ptr p_traj_msg =
+          mav_planning_msgs::PolynomialTrajectory4D::Ptr(new mav_planning_msgs::PolynomialTrajectory4D(last_traj_msg));
+      trajectory_pub.publish(last_traj_msg);
+    }
+  }
+
   inline void sendLastMessage() {
     mav_planning_msgs::PolynomialTrajectory4D &msg = last_traj_msg;
     msg.segments.clear();
@@ -337,10 +361,6 @@ struct DLA3PathPlanner {
     }
     trajectory_pub.publish(marker);
   }
-  geometry_msgs::Point current_position, goal_position;
-  bool traj_planning_successful{};
-  std::shared_ptr<ompl::geometric::PathGeometric> p_last_traj_ompl;
-  mav_planning_msgs::PolynomialTrajectory4D last_traj_msg;
 };
 
 int main(int argc, char *argv[]) {
@@ -352,9 +372,10 @@ int main(int argc, char *argv[]) {
   auto *tree = new octomap::OcTree(0.05);
 
   //read in octotree
-  tree->readBinary(argv[1]);
-
-  std::cout << "read in tree, " << tree->getNumLeafNodes() << " leaves " << std::endl;
+  if (!tree->readBinary(argv[1])) {
+    std::cerr << "Unable to read octree given: " << argv[1] << std::endl;
+    return 1;
+  }
 
   double x, y, z;
   tree->getMetricMin(x, y, z);
@@ -362,9 +383,9 @@ int main(int argc, char *argv[]) {
   tree->getMetricMax(x, y, z);
   octomap::point3d max(x, y, z);
 
-  bool unknownAsOccupied = true;
-  unknownAsOccupied = false;
-  float maxDist = 1.0;
+  bool unknownAsOccupied = false;
+  float maxDist = 1.0; // TODO: Figure out if we should configure this
+
   //- the first argument ist the max distance at which distance computations are clamped
   //- the second argument is the octomap
   //- arguments 3 and 4 can be used to restrict the distance map to a subarea
@@ -372,36 +393,11 @@ int main(int argc, char *argv[]) {
   //The constructor copies data but does not yet compute the distance map
   DynamicEDTOctomap distmap(maxDist, tree, min, max, unknownAsOccupied);
 
-  //This computes the distance map
+  // This computes the distance map.
+  // If you modify the octree via tree->insertScan() or tree->updateNode(),
+  // just call distmap.update() again to adapt the distance map to the changes made
   distmap.update();
 
-  //This is how you can query the map
-  octomap::point3d p(5.0, 5.0, 0.6);
-  //As we don't know what the dimension of the loaded map are, we modify this point
-  p.x() = min.x() + 0.3 * (max.x() - min.x());
-  p.y() = min.y() + 0.6 * (max.y() - min.y());
-  p.z() = min.z() + 0.5 * (max.z() - min.z());
-
-  octomap::point3d closestObst;
-  float distance;
-
-  distmap.getDistanceAndClosestObstacle(p, distance, closestObst);
-
-  std::cout << "\n\ndistance at point " << p.x() << "," << p.y() << "," << p.z() << " is " << distance << std::endl;
-  if (distance < distmap.getMaxDist()) {
-    std::cout << "closest obstacle to " << p.x() << "," << p.y() << "," << p.z() << " is at " << closestObst.x() << ","
-              << closestObst.y() << "," << closestObst.z() << std::endl;
-  }
-
-  //if you modify the octree via tree->insertScan() or tree->updateNode()
-  //just call distmap.update() again to adapt the distance map to the changes made
-
-  ROS_INFO("Checking input arguments!");
-  ROS_INFO_STREAM("argc: " << argc);
-  for (int i = 0; i < argc; i++) {
-    ROS_INFO_STREAM("argv[" << i << "]: " << argv[i]);
-  }
-  ROS_INFO("\n");
 
   /* initialize ros */
   ros::init(argc, argv, "path_planner");

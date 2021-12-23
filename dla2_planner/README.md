@@ -77,3 +77,4 @@ https://github.com/OctoMap/octomap/blob/devel/dynamicEDT3D/src/examples/exampleE
 
 The CMakeLists.txt file needs to load the octomap and the dynamicEDT3D libraries. This part is left to be done by the student, please use the lines related to adding the ompl library on the CMakeLists.txt as example.
 
+# Assignment 2
