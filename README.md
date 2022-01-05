@@ -55,4 +55,16 @@ You can save the created octomap as binary, by executing the command:
 rosrun octomap_server octomap_saver -f octomap.bt
 ```
 
+## Run 2. Assignment
+To run the 2. Assignment execute these commands in seperate terminal windows:
+
+Run octomap_mapping:
+```
+roslaunch dla2_path_planner octomap_mapping_a2.launch 
+```
+
+Run path planner:
+```
+roslaunch dla2_path_planner path_planning.launch
+```
 

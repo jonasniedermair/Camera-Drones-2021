@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="rvizconfig" default="$(find dla2_path_planner)/rviz/config.rviz" />
+    <arg name="map" default="$(find dla2_path_planner)/maps/power_plant.bt" />
+
+    
+    <!-- RViz -->
+    <node pkg="rviz" name="rviz" type="rviz" output="screen" args="-d $(arg rvizconfig)"/>
+    
+    <!-- Path planning -->
+    <node pkg="dla2_path_planner" name="exampleEDTOctomap" type="dla2_path_planner_exampleEDTOctomap" output="screen" args="$(arg map)" />
+</launch>
