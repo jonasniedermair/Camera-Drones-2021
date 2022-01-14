@@ -65,55 +65,6 @@ set(EXTRA_LIBS
   ${OMPL_LIBRARIES}
 )
 
-# some_non_ros_library
-#SET(EXTRA_LIBS
-#  ${EXTRA_LIBS}
-#  # some_non_ros_library
-#)
-#include_directories( ${SOME_NON_ROS_LIBRARY_DIR}/src )
-#link_directories( ${SOME_NON_ROS_LIBRARY_DIR}/build )
-#link_directories(/usr/local/lib)
-#set(EXTRA_LIBS
-#  ${EXTRA_LIBS}
-#  ${SOME_NON_ROS_LIBRARIES}
-#)
-
-# --- OMPL_Example_OptimalPlanning ---
-add_executable(${PROJECT_NAME}_OMPL_Example_OptimalPlanning src/OMPL_Example_OptimalPlanning.cpp )
-target_link_libraries(${PROJECT_NAME}_OMPL_Example_OptimalPlanning
-    ${EXTRA_LIBS}
-)
-# ------------------------------------
-
-# --- DLA2 Path Planner Library ---
-SET( SRC
-		src/dla2_path_planner/dla3_path_planner_ros.cpp
-)
-
-SET( HDR
-  include/${PROJECT_NAME}/dla3_path_planner_ros.h
-  include/${PROJECT_NAME}/helper_functions.h
-)
-
-add_library(${PROJECT_NAME}_ros SHARED ${SRC} ${HDR})
-TARGET_LINK_LIBRARIES(${PROJECT_NAME}_ros
-    ${EXTRA_LIBS}
-)
-# -----------------------------
-
-# --- DLA2 Path Planner Node / Executable ---
-set (EXTRA_LIBS
-    ${EXTRA_LIBS}
-    ${PROJECT_NAME}_ros
-)
-
-##
-add_executable(${PROJECT_NAME}_ros_node src/main_ros_node.cpp )
-target_link_libraries(${PROJECT_NAME}_ros_node
-    ${EXTRA_LIBS}
-)
-# -----------------------------
-
 # --- exampleEDTOctomap ---
 
 find_package(dynamicEDT3D REQUIRED)
@@ -145,12 +96,6 @@ target_link_libraries(${PROJECT_NAME}_trajectory_visualization
 )
 # --------------------------------
 
-## Mark executables and/or libraries for installation
-install(TARGETS ${PROJECT_NAME}_ros_node ${PROJECT_NAME}_ros
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
 
 ## Mark cpp header files for installation
 install(DIRECTORY ./
