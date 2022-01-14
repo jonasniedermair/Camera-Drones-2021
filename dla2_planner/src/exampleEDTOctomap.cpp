@@ -200,7 +200,7 @@ struct DLA3PathPlanner {
   DynamicEDTOctomap *distmap;
   OcTree *tree;
 
-  geometry_msgs::Point current_position, goal_position;
+  geometry_msgs::Point current_position{}, goal_position{};
   bool traj_planning_successful{};
   std::shared_ptr<ompl::geometric::PathGeometric> p_last_traj_ompl;
   mav_planning_msgs::PolynomialTrajectory4D last_traj_msg;
@@ -312,12 +312,12 @@ struct DLA3PathPlanner {
 
   void currentPositionCallback(const geometry_msgs::Point::ConstPtr &p_msg) {
     current_position = *p_msg;
-    ROS_INFO_STREAM("New current position, x: " << current_position.x << "; y: " << current_position.y);
+    ROS_INFO_STREAM("New current position, x: " << current_position.x << "; y: " << current_position.y << "; z: " << current_position.z);
   }
 
   void goalPositionCallback(const geometry_msgs::Point::ConstPtr &p_msg) {
     goal_position = *p_msg;
-    ROS_INFO_STREAM("New goal position, x: " << goal_position.x << "; y: " << goal_position.y);
+    ROS_INFO_STREAM("New goal position, x: " << goal_position.x << "; y: " << goal_position.y << "; z: " << current_position.z);
 
     plan();
 
@@ -359,6 +359,7 @@ struct DLA3PathPlanner {
       msg.segments.push_back(segment);
     }
     trajectory_marker_pub.publish(marker);
+    traj_planning_successful = true;
   }
 };
 
@@ -407,18 +408,18 @@ int main(int argc, char *argv[]) {
 
   ROS_INFO("DLA3PathPlanner started...");
 
-  Eigen::Vector3d start_position{0, 0, 3};
-  Eigen::Vector3d end_position{10, -27, 15};
-
-  dla3_path_planner.current_position = eigToGeo(start_position);
-  dla3_path_planner.goal_position = eigToGeo(end_position);
-  dla3_path_planner.plan();
+//  Eigen::Vector3d start_position{0, 0, 3};
+//  Eigen::Vector3d end_position{10, -27, 15};
+//
+//  dla3_path_planner.current_position = eigToGeo(start_position);
+//  dla3_path_planner.goal_position = eigToGeo(end_position);
+//  dla3_path_planner.plan();
   ROS_INFO("DLA3PathPlanner finished");
   ros::Publisher vis_pub;
   visualization_msgs::Marker marker;
 
   while (true) {
-    dla3_path_planner.sendLastMessage();
+//    dla3_path_planner.sendLastMessage();
     ros::spinOnce();
   }
 
