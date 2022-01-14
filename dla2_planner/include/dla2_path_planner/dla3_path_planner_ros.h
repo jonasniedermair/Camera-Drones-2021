@@ -48,10 +48,10 @@
 
 #include <fstream>
 
-class DLA2PathPlanner {
+class DLA3PathPlanner {
 public:
-  DLA2PathPlanner(ros::NodeHandle &n, ros::NodeHandle &pn, int argc, char **argv);
-  ~DLA2PathPlanner();
+  DLA3PathPlanner(ros::NodeHandle &n, ros::NodeHandle &pn, int argc, char **argv);
+  ~DLA3PathPlanner();
 
 private:
   ros::NodeHandle &pnode_;

@@ -48,14 +48,14 @@
 #include <ompl/geometric/PathGeometric.h>
 #include "ompl/util/Console.h"
 #include <ompl/geometric/planners/bitstar/BITstar.h>
-#include <ompl/geometric/planners/rrt/RRTstar.h>
 #include <ompl/base/StateValidityChecker.h>
 #include <dla2_path_planner/helper_functions.h>
 #include "visualization_msgs/MarkerArray.h"
-#include <mav_planning_msgs/PolynomialTrajectory4D.h>
 
 #include <iostream>
 #include <utility>
+
+using namespace octomap;
 
 visualization_msgs::Marker create_current_marker(double x, double y, double z) {
   visualization_msgs::Marker marker;
@@ -152,18 +152,18 @@ using namespace cd;
 namespace ob = ompl::base;
 namespace og = ompl::geometric;
 
+template<class T, class U>
+T conv(const U &p) {
+    return T(p[0], p[1], p[2]);
+}
 
-// Our "collision checker". For this demo, our robot's state space
-// lies in [0,1]x[0,1], with a circular obstacle of radius 0.25
-// centered at (0.5,0.5). Any states lying in this circular region are
-// considered "in collision".
 class ValidityChecker3 : public ob::StateValidityChecker {
   const DynamicEDTOctomap *distmap;
-  const octomap::OcTree *tree;
+  const OcTree *tree;
 public:
   ValidityChecker3(const ob::SpaceInformationPtr &si,
                    const DynamicEDTOctomap *distmap,
-                   const octomap::OcTree *tree) :
+                   const OcTree *tree) :
       ob::StateValidityChecker(si),
       distmap(distmap),
       tree(tree) {}
@@ -184,9 +184,9 @@ public:
 
     // Extract the drone's (x, y, z) position from its state
     auto p = state3D->values;
-    octomap::point3d closestObst;
+    point3d closestObst;
     float distance;
-    distmap->getDistanceAndClosestObstacle(octomap::point3d(p[0], p[1], p[2]), distance, closestObst);
+    distmap->getDistanceAndClosestObstacle(conv<point3d>(p), distance, closestObst);
     return distance;
   }
 };
@@ -198,7 +198,7 @@ struct DLA3PathPlanner {
   double runTime;
   std::string outputFile;
   DynamicEDTOctomap *distmap;
-  octomap::OcTree *tree;
+  OcTree *tree;
 
   geometry_msgs::Point current_position, goal_position;
   bool traj_planning_successful{};
@@ -210,7 +210,7 @@ struct DLA3PathPlanner {
                   double RunTime,
                   std::string OutputFile,
                   DynamicEDTOctomap *distmap,
-                  octomap::OcTree *tree)
+                  OcTree *tree)
       : pnode_(Pnode), node_(Node), runTime(RunTime),
         outputFile(std::move(OutputFile)), distmap(distmap),
         tree(tree) {
@@ -368,7 +368,7 @@ int main(int argc, char *argv[]) {
     exit(0);
   }
 
-  auto *tree = new octomap::OcTree(0.05);
+  auto *tree = new OcTree(0.05);
 
   //read in octotree
   if (!tree->readBinary(argv[1])) {
@@ -378,9 +378,9 @@ int main(int argc, char *argv[]) {
 
   double x, y, z;
   tree->getMetricMin(x, y, z);
-  octomap::point3d min(x, y, z);
+  point3d min(x, y, z);
   tree->getMetricMax(x, y, z);
-  octomap::point3d max(x, y, z);
+  point3d max(x, y, z);
 
   bool unknownAsOccupied = false;
   float maxDist = 1.0; // TODO: Figure out if we should configure this
@@ -402,10 +402,10 @@ int main(int argc, char *argv[]) {
   ros::init(argc, argv, "path_planner");
   ros::NodeHandle nh;
   ros::NodeHandle pnh("~");
-  ROS_INFO("Starting DLA2PathPlanner...");
+  ROS_INFO("Starting DLA3PathPlanner...");
   DLA3PathPlanner dla3_path_planner(nh, pnh, 1.0, "output", &distmap, tree);
 
-  ROS_INFO("DLA2PathPlanner started...");
+  ROS_INFO("DLA3PathPlanner started...");
 
   Eigen::Vector3d start_position{0, 0, 3};
   Eigen::Vector3d end_position{10, -27, 15};
@@ -413,7 +413,7 @@ int main(int argc, char *argv[]) {
   dla3_path_planner.current_position = eigToGeo(start_position);
   dla3_path_planner.goal_position = eigToGeo(end_position);
   dla3_path_planner.plan();
-  ROS_INFO("DLA2PathPlanner finished");
+  ROS_INFO("DLA3PathPlanner finished");
   ros::Publisher vis_pub;
   visualization_msgs::Marker marker;
 

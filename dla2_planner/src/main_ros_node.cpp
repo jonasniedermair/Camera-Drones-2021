@@ -39,7 +39,7 @@
 #include <geometry_msgs/Point.h>
 #include <visualization_msgs/Marker.h>
 #include <ros/ros.h>
-#include <dla2_path_planner/dla2_path_planner_ros.h>
+#include <dla2_path_planner/dla3_path_planner_ros.h>
 
 #include <iostream>
 
@@ -156,9 +156,9 @@ int main(int argc, char *argv[]) {
   ros::init(argc, argv, "path_planner");
   ros::NodeHandle nh;
   ros::NodeHandle pnh("~");
-  ROS_INFO("Starting DLA2PathPlanner...");
-  DLA2PathPlanner dla2_path_planner(nh, pnh, argc, argv);
-  ROS_INFO("DLA2PathPlanner started...");
+  ROS_INFO("Starting DLA3PathPlanner...");
+  DLA3PathPlanner dla2_path_planner(nh, pnh, argc, argv);
+  ROS_INFO("DLA3PathPlanner started...");
   ros::Publisher vis_pub;
   visualization_msgs::Marker marker;
 

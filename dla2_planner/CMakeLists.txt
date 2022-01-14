@@ -35,7 +35,6 @@ SET( EXTRA_LIBS
 )
 
 find_package(cmake_modules REQUIRED)
-find_package(Eigen)
 find_package(Eigen3)
 
 include_directories(
@@ -88,11 +87,11 @@ target_link_libraries(${PROJECT_NAME}_OMPL_Example_OptimalPlanning
 
 # --- DLA2 Path Planner Library ---
 SET( SRC
-  src/${PROJECT_NAME}/${PROJECT_NAME}_ros.cpp
+		src/dla2_path_planner/dla3_path_planner_ros.cpp
 )
 
 SET( HDR
-  include/${PROJECT_NAME}/${PROJECT_NAME}_ros.h
+  include/${PROJECT_NAME}/dla3_path_planner_ros.h
   include/${PROJECT_NAME}/helper_functions.h
 )
 
