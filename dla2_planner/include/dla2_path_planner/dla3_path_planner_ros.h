@@ -76,6 +76,9 @@ private:
   bool traj_planning_successful;
   std::shared_ptr<ompl::geometric::PathGeometric> p_last_traj_ompl;
   mav_planning_msgs::PolynomialTrajectory4D last_traj_msg;
+
+  std::shared_ptr<ompl::geometric::PathGeometric> p_raw_last_traj_ompl;
+  mav_planning_msgs::PolynomialTrajectory4D raw_last_traj_msg;
 };
 
 #endif // DLA2_PATH_PLANNER_H_

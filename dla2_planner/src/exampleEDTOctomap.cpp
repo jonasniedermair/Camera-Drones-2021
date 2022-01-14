@@ -51,6 +51,7 @@
 #include <ompl/base/StateValidityChecker.h>
 #include <dla2_path_planner/helper_functions.h>
 #include "visualization_msgs/MarkerArray.h"
+#include <ompl/geometric/PathSimplifier.h>
 
 #include <iostream>
 #include <utility>
@@ -205,6 +206,9 @@ struct DLA3PathPlanner {
   std::shared_ptr<ompl::geometric::PathGeometric> p_last_traj_ompl;
   mav_planning_msgs::PolynomialTrajectory4D last_traj_msg;
 
+  std::shared_ptr<ompl::geometric::PathGeometric> p_raw_last_traj_ompl;
+  mav_planning_msgs::PolynomialTrajectory4D raw_last_traj_msg;
+
   DLA3PathPlanner(ros::NodeHandle &Pnode,
                   ros::NodeHandle &Node,
                   double RunTime,
@@ -218,9 +222,12 @@ struct DLA3PathPlanner {
     goal_position_sub = pnode_.subscribe("goal_position", 10, &DLA3PathPlanner::goalPositionCallback, this);
     trajectory_pub = pnode_.advertise<mav_planning_msgs::PolynomialTrajectory4D>("planned_trajectory", 1);
     trajectory_marker_pub = pnode_.advertise<visualization_msgs::Marker>("planned_trajectory_marker", 0);
+
+    trajectory_raw_pub = pnode_.advertise<mav_planning_msgs::PolynomialTrajectory4D>("planned_trajectory_raw", 1);
+    trajectory_raw_marker_pub = pnode_.advertise<visualization_msgs::Marker>("planned_trajectory_raw_marker", 0);
   }
 
-  inline void plan() {
+inline void plan() {
     // Construct the robot state space in which we're planning. We're
     // planning in [min,max]x[min,max]x[min,max], a subset of R^3.
     auto space(std::make_shared<ob::RealVectorStateSpace>(3));
@@ -297,8 +304,40 @@ struct DLA3PathPlanner {
         outFile.close();
       }
 
-      p_last_traj_ompl = std::static_pointer_cast<ompl::geometric::PathGeometric>(pdef->getSolutionPath());
+      p_raw_last_traj_ompl = std::static_pointer_cast<ompl::geometric::PathGeometric>(pdef->getSolutionPath());
+
+      // 0.05 (less points)
+      // 0.025 (quite good)
+      // 0.01(more points)
+      // original value: 0.005
+      float snap_to_vertex = 0.025;
+
+      int number_of_runs = 20;
+
+
+      og::PathSimplifier simplifier(si, ompl::base::GoalPtr(), optimizationObjective);
+    
+      og::PathGeometric *path = new og::PathGeometric(*p_raw_last_traj_ompl); 
+      double avg_costs = 0;
+      ob::Cost original_cost = p_raw_last_traj_ompl->cost(optimizationObjective);
+
+      for (int run = 0; run < number_of_runs; run++)
+      {
+          simplifier.perturbPath(*path, 2.0, 100, 100, snap_to_vertex);
+          simplifier.shortcutPath(*path, 100, 100, 0.33, snap_to_vertex);
+          avg_costs += path->cost(optimizationObjective).value();
+      }
+
+      p_last_traj_ompl = std::make_shared<ompl::geometric::PathGeometric>(*path);
+      simplifier.smoothBSpline(*path, 1);
+      avg_costs = avg_costs / number_of_runs;
       traj_planning_successful = true;
+
+      std::vector<ompl::base::State*>& states = p_raw_last_traj_ompl->getStates();
+      ob::StateValidityCheckerPtr checker = si->getStateValidityChecker();
+
+      ROS_INFO_STREAM(std::endl << "Average cost: " << avg_costs << ", original cost: " << original_cost.value() << std::endl);
+
     } else {
       std::cout << "No solution found." << std::endl;
       traj_planning_successful = false;
@@ -309,6 +348,9 @@ struct DLA3PathPlanner {
   ros::Subscriber goal_position_sub;
   ros::Publisher trajectory_pub;
   ros::Publisher trajectory_marker_pub;
+  ros::Publisher trajectory_raw_pub;
+  ros::Publisher trajectory_raw_marker_pub;
+
 
   void currentPositionCallback(const geometry_msgs::Point::ConstPtr &p_msg) {
     current_position = *p_msg;
@@ -322,20 +364,25 @@ struct DLA3PathPlanner {
     plan();
 
     if (traj_planning_successful) {
-      sendLastMessage();
+      sendLastMessage(last_traj_msg, p_last_traj_ompl, trajectory_marker_pub);
       mav_planning_msgs::PolynomialTrajectory4D::Ptr p_traj_msg =
           mav_planning_msgs::PolynomialTrajectory4D::Ptr(new mav_planning_msgs::PolynomialTrajectory4D(last_traj_msg));
       trajectory_pub.publish(last_traj_msg);
+
+      sendLastMessage(raw_last_traj_msg, p_raw_last_traj_ompl, trajectory_raw_marker_pub);
+      mav_planning_msgs::PolynomialTrajectory4D::Ptr p_raw_traj_msg =
+          mav_planning_msgs::PolynomialTrajectory4D::Ptr(new mav_planning_msgs::PolynomialTrajectory4D(raw_last_traj_msg));
+      trajectory_pub.publish(raw_last_traj_msg);
     }
   }
 
-  inline void sendLastMessage() {
-    mav_planning_msgs::PolynomialTrajectory4D &msg = last_traj_msg;
+  inline void sendLastMessage(mav_planning_msgs::PolynomialTrajectory4D& trajectory, std::shared_ptr<ompl::geometric::PathGeometric> path, ros::Publisher publisher) {
+    mav_planning_msgs::PolynomialTrajectory4D &msg = trajectory;
     msg.segments.clear();
     msg.header.stamp = ros::Time::now();
     msg.header.frame_id = "world"; // "odom"
 
-    std::vector<ompl::base::State *> &states = p_last_traj_ompl->getStates();
+    std::vector<ompl::base::State *> &states = path->getStates();
     visualization_msgs::MarkerArray ma;
     auto marker = create_current_marker(0, 0, 0);
     for (auto p_s : states) {
@@ -358,7 +405,7 @@ struct DLA3PathPlanner {
       segment.yaw.push_back(yaw_s);
       msg.segments.push_back(segment);
     }
-    trajectory_marker_pub.publish(marker);
+    publisher.publish(marker);
     traj_planning_successful = true;
   }
 };
