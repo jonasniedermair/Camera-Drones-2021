@@ -201,6 +201,7 @@ struct DLA3PathPlanner {
   DynamicEDTOctomap *distmap;
   OcTree *tree;
 
+  bool current_position_set{};
   geometry_msgs::Point current_position{}, goal_position{};
   bool traj_planning_successful{};
   std::shared_ptr<ompl::geometric::PathGeometric> p_last_traj_ompl;
@@ -335,6 +336,7 @@ inline void plan() {
 
       ROS_INFO_STREAM(std::endl << "Average cost: " << avg_costs << ", original cost: " << original_cost.value() << std::endl);
 
+      delete path;
     } else {
       std::cout << "No solution found." << std::endl;
       traj_planning_successful = false;
@@ -348,11 +350,17 @@ inline void plan() {
 
 
   void currentPositionCallback(const geometry_msgs::Point::ConstPtr &p_msg) {
+    current_position_set = true;
     current_position = *p_msg;
     ROS_INFO_STREAM("New current position, x: " << current_position.x << "; y: " << current_position.y << "; z: " << current_position.z);
   }
 
   void goalPositionCallback(const geometry_msgs::Point::ConstPtr &p_msg) {
+    while (!current_position_set) {
+      ROS_INFO_STREAM("Waiting for current position to be set");
+      // Yields to something else.
+      ros::spinOnce();
+    }
     goal_position = *p_msg;
     ROS_INFO_STREAM("New goal position, x: " << goal_position.x << "; y: " << goal_position.y << "; z: " << current_position.z);
 
@@ -362,16 +370,17 @@ inline void plan() {
       sendLastMessage(last_traj_msg, p_last_traj_ompl);
       mav_planning_msgs::PolynomialTrajectory4D::Ptr p_traj_msg =
           mav_planning_msgs::PolynomialTrajectory4D::Ptr(new mav_planning_msgs::PolynomialTrajectory4D(last_traj_msg));
-      trajectory_pub.publish(last_traj_msg);
+      trajectory_pub.publish(p_traj_msg);
 
       sendLastMessage(raw_last_traj_msg, p_raw_last_traj_ompl);
       mav_planning_msgs::PolynomialTrajectory4D::Ptr p_raw_traj_msg =
           mav_planning_msgs::PolynomialTrajectory4D::Ptr(new mav_planning_msgs::PolynomialTrajectory4D(raw_last_traj_msg));
-      trajectory_raw_pub.publish(raw_last_traj_msg);
+      // TODO: Is this correct?
+      trajectory_raw_pub.publish(p_raw_traj_msg);
     }
   }
 
-  inline void sendLastMessage(mav_planning_msgs::PolynomialTrajectory4D& trajectory, std::shared_ptr<ompl::geometric::PathGeometric> path) {
+  inline void sendLastMessage(mav_planning_msgs::PolynomialTrajectory4D& trajectory, const std::shared_ptr<ompl::geometric::PathGeometric>& path) {
     mav_planning_msgs::PolynomialTrajectory4D &msg = trajectory;
     msg.segments.clear();
     msg.header.stamp = ros::Time::now();
@@ -395,7 +404,6 @@ inline void plan() {
       segment.yaw.push_back(yaw_s);
       msg.segments.push_back(segment);
     }
-    traj_planning_successful = true;
   }
 };
 
