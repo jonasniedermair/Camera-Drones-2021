@@ -79,3 +79,41 @@ rostopic pub goal_position geometry_msgs/Point -- 2.0 -27.0 15.0
 ```
 
 NOTE: Run the commands above in sequence!
+
+## Run 3. Assignment
+
+Run octomap_mapping:
+```
+roslaunch dla2_path_planner octomap_mapping_a2.launch 
+```
+
+Run path planner:
+```
+roslaunch dla2_path_planner path_planning.launch
+```
+
+Run trajectory_visualization of the raw path:
+```
+roslaunch dla2_path_planner trajectory_visualization.launch 
+```
+
+Run trajectory_visualization of the simplified path:
+```
+roslaunch dla2_path_planner trajectory_visualization.launch node_name:="trajectory_visualization" input_topic:="planned_trajectory" output_topic:="trajectory_markers" marker_color:="W"
+
+```
+
+Set up the starting point
+```
+rostopic pub current_position geometry_msgs/Point -- 0.0 0.0 3.0
+```
+
+Set up the end point
+```
+rostopic pub goal_position geometry_msgs/Point -- 2.0 -27.0 15.0
+```
+
+NOTE: Run the commands above in sequence!
+
+
+

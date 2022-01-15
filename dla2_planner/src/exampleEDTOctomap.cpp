@@ -221,10 +221,7 @@ struct DLA3PathPlanner {
     current_position_sub = pnode_.subscribe("current_position", 10, &DLA3PathPlanner::currentPositionCallback, this);
     goal_position_sub = pnode_.subscribe("goal_position", 10, &DLA3PathPlanner::goalPositionCallback, this);
     trajectory_pub = pnode_.advertise<mav_planning_msgs::PolynomialTrajectory4D>("planned_trajectory", 1);
-    trajectory_marker_pub = pnode_.advertise<visualization_msgs::Marker>("planned_trajectory_marker", 0);
-
     trajectory_raw_pub = pnode_.advertise<mav_planning_msgs::PolynomialTrajectory4D>("planned_trajectory_raw", 1);
-    trajectory_raw_marker_pub = pnode_.advertise<visualization_msgs::Marker>("planned_trajectory_raw_marker", 0);
   }
 
 inline void plan() {
@@ -347,9 +344,7 @@ inline void plan() {
   ros::Subscriber current_position_sub;
   ros::Subscriber goal_position_sub;
   ros::Publisher trajectory_pub;
-  ros::Publisher trajectory_marker_pub;
   ros::Publisher trajectory_raw_pub;
-  ros::Publisher trajectory_raw_marker_pub;
 
 
   void currentPositionCallback(const geometry_msgs::Point::ConstPtr &p_msg) {
@@ -364,35 +359,30 @@ inline void plan() {
     plan();
 
     if (traj_planning_successful) {
-      sendLastMessage(last_traj_msg, p_last_traj_ompl, trajectory_marker_pub);
+      sendLastMessage(last_traj_msg, p_last_traj_ompl);
       mav_planning_msgs::PolynomialTrajectory4D::Ptr p_traj_msg =
           mav_planning_msgs::PolynomialTrajectory4D::Ptr(new mav_planning_msgs::PolynomialTrajectory4D(last_traj_msg));
       trajectory_pub.publish(last_traj_msg);
 
-      sendLastMessage(raw_last_traj_msg, p_raw_last_traj_ompl, trajectory_raw_marker_pub);
+      sendLastMessage(raw_last_traj_msg, p_raw_last_traj_ompl);
       mav_planning_msgs::PolynomialTrajectory4D::Ptr p_raw_traj_msg =
           mav_planning_msgs::PolynomialTrajectory4D::Ptr(new mav_planning_msgs::PolynomialTrajectory4D(raw_last_traj_msg));
-      trajectory_pub.publish(raw_last_traj_msg);
+      trajectory_raw_pub.publish(raw_last_traj_msg);
     }
   }
 
-  inline void sendLastMessage(mav_planning_msgs::PolynomialTrajectory4D& trajectory, std::shared_ptr<ompl::geometric::PathGeometric> path, ros::Publisher publisher) {
+  inline void sendLastMessage(mav_planning_msgs::PolynomialTrajectory4D& trajectory, std::shared_ptr<ompl::geometric::PathGeometric> path) {
     mav_planning_msgs::PolynomialTrajectory4D &msg = trajectory;
     msg.segments.clear();
     msg.header.stamp = ros::Time::now();
     msg.header.frame_id = "world"; // "odom"
 
     std::vector<ompl::base::State *> &states = path->getStates();
-    visualization_msgs::MarkerArray ma;
-    auto marker = create_current_marker(0, 0, 0);
     for (auto p_s : states) {
       const double x = p_s->as<ob::RealVectorStateSpace::StateType>()->values[0];
       const double y = p_s->as<ob::RealVectorStateSpace::StateType>()->values[1];
       const double z = p_s->as<ob::RealVectorStateSpace::StateType>()->values[2];
       const double yaw_s = 0.0;
-      geometry_msgs::Point p = createPoint(x, y, z);
-      marker.points.push_back(p);
-
 
       mav_planning_msgs::PolynomialSegment4D segment;
       segment.header = msg.header;
@@ -405,7 +395,6 @@ inline void plan() {
       segment.yaw.push_back(yaw_s);
       msg.segments.push_back(segment);
     }
-    publisher.publish(marker);
     traj_planning_successful = true;
   }
 };

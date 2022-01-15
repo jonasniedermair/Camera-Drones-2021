@@ -5,6 +5,8 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
+        - /Raw (Planned) Path1
+        - /Simplified  Path1
       Splitter Ratio: 0.5
     Tree Height: 719
   - Class: rviz/Selection
@@ -71,18 +73,18 @@ Visualization Manager:
       Value: true
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /planned_trajectory_marker
+      Marker Topic: /trajectory_visualization_raw/trajectory_markers_raw
       Name: Raw (Planned) Path
       Namespaces:
-        {}
+        planned_trajectory: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /planned_trajectory_raw_marker
+      Marker Topic: /trajectory_visualization/trajectory_markers
       Name: Simplified  Path
       Namespaces:
-        "": true
+        planned_trajectory: true
       Queue Size: 100
       Value: true
   Enabled: true
@@ -113,7 +115,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 66.09173583984375
+      Distance: 53.3131103515625
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -128,10 +130,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.0703983306884766
+      Pitch: 0.7303986549377441
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.4154446125030518
+      Yaw: 4.205453872680664
     Saved: ~
 Window Geometry:
   Displays:
