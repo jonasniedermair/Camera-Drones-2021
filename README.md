@@ -115,5 +115,5 @@ rostopic pub goal_position geometry_msgs/Point -- 2.0 -27.0 15.0
 
 NOTE: Run the commands above in sequence!
 
-
+NOTE: world is the base frame
 

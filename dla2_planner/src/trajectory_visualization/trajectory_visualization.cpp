@@ -40,6 +40,7 @@ TrajectoryVisualization::TrajectoryVisualization(ros::NodeHandle &n, ros::NodeHa
 }
 
 void TrajectoryVisualization::trajectoryCallback(const mav_planning_msgs::PolynomialTrajectory4D::ConstPtr &p_msg) {
+    ROS_INFO_STREAM("Trajectory Visualization callback triggred");
     visualization_msgs::Marker::Ptr p_traj_points, p_traj_edges;
     p_traj_points = visualization_msgs::Marker::Ptr( new visualization_msgs::Marker() );
     p_traj_edges = visualization_msgs::Marker::Ptr( new visualization_msgs::Marker() );
