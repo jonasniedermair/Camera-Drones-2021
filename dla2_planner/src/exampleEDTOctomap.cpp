@@ -226,8 +226,9 @@ struct DLA3PathPlanner {
     goal_position_sub = pnode_.subscribe("goal_position", 10, &DLA3PathPlanner::goalPositionCallback, this);
     trajectory_pub = pnode_.advertise<mav_planning_msgs::PolynomialTrajectory4D>("planned_trajectory", 1);
     trajectory_raw_pub = pnode_.advertise<mav_planning_msgs::PolynomialTrajectory4D>("planned_trajectory_raw", 1);
-    Pnode.param("bspline", bspline, true);
-    Pnode.param("perturb", perturb, true);
+    node_.param("bspline", bspline, true);
+    node_.param("perturb", perturb, true);
+    ROS_INFO_STREAM("bspline: " << bspline << " perturb: " << perturb);
   }
 
 inline void plan() {
