@@ -41,9 +41,7 @@ rostopic pub /path_planner/goal_position mav_planning_msgs/Point2D "x: 0.9
 y: 0.9" --once
 
 3D (when using 3D version):
-rostopic pub /path_planner/goal_position geometry_msgs/Point "x: 0.9
-y: 0.9
-z: 0.9" --once
+rostopic pub /path_planner/goal_position geometry_msgs/Point "x: 0.9 y: 0.9 z: 0.9" --once
 
 * To receive the planned trajectory on the terminal run:
 

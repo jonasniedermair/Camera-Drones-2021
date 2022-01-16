@@ -1,5 +1,7 @@
 #include <dla3_trajectory_generator/dla3_trajectory_generator.h>
 
+#include <Eigen/Dense>
+
 DLA3TrajectoryGenerator::DLA3TrajectoryGenerator(ros::NodeHandle& nh) :
     nh_(nh),
     max_v_(2.0),
@@ -20,7 +22,7 @@ DLA3TrajectoryGenerator::DLA3TrajectoryGenerator(ros::NodeHandle& nh) :
       nh.advertise<visualization_msgs::MarkerArray>("trajectory_markers", 0);
 
   pub_trajectory_ =
-      nh.advertise<mav_planning_msgs::PolynomialTrajectory4D>("trajectory",
+      nh.advertise<mav_planning_msgs::PolynomialTrajectory4D>("smooth_trajectory4d",
                                                               0);
 
   // subscriber for Odometry
@@ -36,6 +38,15 @@ DLA3TrajectoryGenerator::DLA3TrajectoryGenerator(ros::NodeHandle& nh) :
 void DLA3TrajectoryGenerator::trajectoryCallback(const mav_planning_msgs::PolynomialTrajectory4D msg)
 {
   ROS_INFO("Trajectory message received!");
+  Eigen::Vector3d goal_position = Eigen::Vector3d(msg.segments.back().x[0],
+                                                   msg.segments.back().y[0],
+                                                   msg.segments.back().z[0]);
+
+  mav_trajectory_generation::Trajectory trajectory;
+  mav_trajectory_generation::polynomialTrajectoryMsgToTrajectory(msg, &trajectory);
+
+  planTrajectory(goal_position, Eigen::Vector3d{}, &trajectory);
+  publishTrajectory(trajectory);
 }
 
 // Callback to get current Pose of UAV
@@ -106,6 +117,10 @@ bool DLA3TrajectoryGenerator::planTrajectory(const Eigen::VectorXd& goal_pos,
   // Set up polynomial solver with default params
   mav_trajectory_generation::NonlinearOptimizationParameters parameters;
 
+  parameters.algorithm = nlopt::LN_SBPLX;
+  parameters.f_rel = 0.00005;
+  parameters.time_alloc_method = mav_trajectory_generation::NonlinearOptimizationParameters::kSquaredTime;
+
   // set up optimization problem
   const int N = 10;
   mav_trajectory_generation::PolynomialOptimizationNonLinear<N> opt(dimension, parameters);
@@ -138,7 +153,7 @@ bool DLA3TrajectoryGenerator::publishTrajectory(const mav_trajectory_generation:
   pub_markers_.publish(markers);
 
   // send trajectory to be executed on UAV
-  mav_planning_msgs::PolynomialTrajectory msg;
+  mav_planning_msgs::PolynomialTrajectory4D msg;
   mav_trajectory_generation::trajectoryToPolynomialTrajectoryMsg(trajectory,
                                                                  &msg);
   msg.header.frame_id = "world";
