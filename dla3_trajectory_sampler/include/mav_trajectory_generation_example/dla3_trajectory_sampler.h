@@ -31,7 +31,7 @@ class DLA3TrajectorySampler {
 private:
   ros::NodeHandle& nh_, pnh_;
   ros::Subscriber smooth_trajectory4d_sub;
-  void smoothTrajectory4DCallback(const mav_planning_msgs::PolynomialTrajectory4D::ConstPtr& p_msg);
+  void smoothTrajectory4DCallback(const mav_planning_msgs::PolynomialTrajectory4D p_msg);
 
   // The trajectory to sub-sample.
   mav_trajectory_generation::Trajectory trajectory_;

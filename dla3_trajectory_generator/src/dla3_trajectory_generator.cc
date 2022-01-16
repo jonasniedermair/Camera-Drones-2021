@@ -16,6 +16,10 @@ DLA3TrajectoryGenerator::DLA3TrajectoryGenerator(ros::NodeHandle& nh) :
   if (!nh_.getParam(ros::this_node::getName() + "/max_a", max_a_)){
     ROS_WARN("[dla3_trajectory_generator] param max_a not found");
   }
+  if (!nh.getParam("raw", raw)) {
+    ROS_WARN("[dla3_trajectory_generator] param raw not found");
+  }
+
 
   // create publisher for RVIZ markers
   pub_markers_ =
@@ -25,13 +29,13 @@ DLA3TrajectoryGenerator::DLA3TrajectoryGenerator(ros::NodeHandle& nh) :
       nh.advertise<mav_planning_msgs::PolynomialTrajectory4D>("smooth_trajectory4d",
                                                               0);
 
-  // subscriber for Odometry
-  // sub_odom_ =
-  //     nh.subscribe("uav_pose", 1, &DLA3TrajectoryGenerator::uavOdomCallback, this);
+//   subscriber for Odometry
+   sub_odom_ =
+       nh.subscribe("uav_pose", 1, &DLA3TrajectoryGenerator::uavOdomCallback, this);
 
   // subscriber for trajectory
   ROS_INFO("Subscribe to /planned_trajectory");
-  sub_trajectory_ = nh_.subscribe("/planned_trajectory", 10, &DLA3TrajectoryGenerator::trajectoryCallback, this); 
+  sub_trajectory_ = nh_.subscribe("/planned_trajectory" + std::string(raw ? "_raw" : ""), 10, &DLA3TrajectoryGenerator::trajectoryCallback, this);
     
 }
 
@@ -79,6 +83,24 @@ void DLA3TrajectoryGenerator::uavOdomCallback(const nav_msgs::Odometry::ConstPtr
 // Method to set maximum speed.
 void DLA3TrajectoryGenerator::setMaxSpeed(const double max_v) {
   max_v_ = max_v;
+}
+
+bool DLA3TrajectoryGenerator::computeMaxJerkAndSnap(mav_trajectory_generation::Trajectory *trajectory, double *jerk, double *snap) {
+  std::vector<int> dimensions(trajectory->D());  // Evaluate in whatever dimensions we have.
+  std::iota(dimensions.begin(), dimensions.end(), 0);
+
+  mav_trajectory_generation::Extremum v_min_traj, v_max_traj, a_min_traj, a_max_traj;
+
+  bool success = trajectory->computeMinMaxMagnitude(
+      mav_trajectory_generation::derivative_order::JERK, dimensions,
+      &v_min_traj, &v_max_traj);
+  success &= trajectory->computeMinMaxMagnitude(
+      mav_trajectory_generation::derivative_order::SNAP, dimensions,
+      &a_min_traj, &a_max_traj);
+
+  *jerk = v_max_traj.value;
+  *snap = a_max_traj.value;
+  return success;
 }
 
 // Plans a trajectory from the current position to the a goal position and velocity
@@ -159,6 +181,20 @@ bool DLA3TrajectoryGenerator::planTrajectory(const std::vector<Eigen::VectorXd> 
 
   // get trajectory as polynomial parameters
   opt.getTrajectory(&(*trajectory));
+
+  auto result = opt.getOptimizationInfo();
+
+  double estimated_time = trajectory->getMaxTime();
+  double estimated_v, estimated_a;
+  double estimated_j, estimated_s;
+  trajectory->computeMaxVelocityAndAcceleration(&estimated_v, &estimated_a);
+  computeMaxJerkAndSnap(trajectory, &estimated_j, &estimated_s);
+
+  std::cout << "Estimated time: " << estimated_time << std::endl;
+  std::cout << "Estimated velocity: " << estimated_v << std::endl;
+  std::cout << "Estimated acceleration: " << estimated_a << std::endl;
+  std::cout << "Estimated jerk: " << estimated_j << std::endl;
+  std::cout << "Estimated snap: " << estimated_s << std::endl;
 
   return true;
 }

@@ -117,3 +117,28 @@ NOTE: Run the commands above in sequence!
 
 NOTE: world is the base frame
 
+Planner parameter analysis:
+
+Scenario #1:
+    * simplified + bspline + perturb
+
+Scenario #2:
+    * simplified + no bspline + perturb
+
+Scenario #3:
+    * raw trajectory
+
+Scenario #4:
+    * simplfied + no bspline + no perturb
+
+Constraints:
+    * Check how:
+        * speed
+        * acc
+        * jerk
+        * snap
+    affect velocity at the beginning and end.
+    * Record a bunch of videos of this.
+ 
+
+

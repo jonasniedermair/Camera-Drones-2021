@@ -209,6 +209,9 @@ struct DLA3PathPlanner {
 
   std::shared_ptr<ompl::geometric::PathGeometric> p_raw_last_traj_ompl;
   mav_planning_msgs::PolynomialTrajectory4D raw_last_traj_msg;
+  bool bspline;
+  bool perturb;
+
 
   DLA3PathPlanner(ros::NodeHandle &Pnode,
                   ros::NodeHandle &Node,
@@ -223,6 +226,8 @@ struct DLA3PathPlanner {
     goal_position_sub = pnode_.subscribe("goal_position", 10, &DLA3PathPlanner::goalPositionCallback, this);
     trajectory_pub = pnode_.advertise<mav_planning_msgs::PolynomialTrajectory4D>("planned_trajectory", 1);
     trajectory_raw_pub = pnode_.advertise<mav_planning_msgs::PolynomialTrajectory4D>("planned_trajectory_raw", 1);
+    Pnode.param("bspline", bspline, true);
+    Pnode.param("perturb", perturb, true);
   }
 
 inline void plan() {
@@ -319,15 +324,19 @@ inline void plan() {
       double avg_costs = 0;
       ob::Cost original_cost = p_raw_last_traj_ompl->cost(optimizationObjective);
 
-      for (int run = 0; run < number_of_runs; run++)
-      {
+      for (int run = 0; run < number_of_runs; run++) {
+        if (perturb) {
           simplifier.perturbPath(*path, 2.0, 100, 100, snap_to_vertex);
-          simplifier.shortcutPath(*path, 100, 100, 0.33, snap_to_vertex);
-          avg_costs += path->cost(optimizationObjective).value();
+        }
+        simplifier.shortcutPath(*path, 100, 100, 0.33, snap_to_vertex);
+        avg_costs += path->cost(optimizationObjective).value();
       }
 
       p_last_traj_ompl = std::make_shared<ompl::geometric::PathGeometric>(*path);
-      simplifier.smoothBSpline(*path, 1);
+
+      if (bspline) {
+        simplifier.smoothBSpline(*path, 1);
+      }
       avg_costs = avg_costs / number_of_runs;
       traj_planning_successful = true;
 
@@ -347,6 +356,7 @@ inline void plan() {
   ros::Subscriber goal_position_sub;
   ros::Publisher trajectory_pub;
   ros::Publisher trajectory_raw_pub;
+
 
 
   void currentPositionCallback(const geometry_msgs::Point::ConstPtr &p_msg) {

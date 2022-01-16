@@ -35,7 +35,13 @@ class DLA3TrajectoryGenerator {
                       
   bool publishTrajectory(const mav_trajectory_generation::Trajectory& trajectory);
 
- private:
+  // Compute max jerk and max snap.
+  bool computeMaxJerkAndSnap(mav_trajectory_generation::Trajectory *trajectory,
+                          double *jerk,
+                          double *snap);
+
+
+private:
   ros::Publisher pub_markers_;
   ros::Publisher pub_trajectory_;
   ros::Subscriber sub_odom_;
@@ -49,7 +55,7 @@ class DLA3TrajectoryGenerator {
   double max_a_; // m/s^2
   double max_ang_v_;
   double max_ang_a_;
-
+  bool raw{};
 };
 
 #endif // MAV_TRAJECTORY_GENERATION_EXAMPLE_PLANNER_H

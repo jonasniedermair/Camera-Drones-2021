@@ -7,6 +7,8 @@ catkin_simple(ALL_DEPS_REQUIRED)
 set(CMAKE_MAC	OSX_RPATH 0)
 add_definitions(-std=c++11)
 
+
+
 ############
 # BINARIES #
 ############

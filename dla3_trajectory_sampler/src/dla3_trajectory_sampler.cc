@@ -20,7 +20,7 @@ DLA3TrajectorySampler::DLA3TrajectorySampler(ros::NodeHandle& nh, ros::NodeHandl
   pnh_.param("dt", dt_, dt_);
 
   smooth_trajectory4d_sub = pnh_.subscribe<mav_planning_msgs::PolynomialTrajectory4D>(
-    "smooth_trajectory4d", 10,
+    "/smooth_trajectory4d", 10,
     &DLA3TrajectorySampler::smoothTrajectory4DCallback, this);
   
   const bool oneshot = false;
@@ -31,9 +31,8 @@ DLA3TrajectorySampler::DLA3TrajectorySampler(ros::NodeHandle& nh, ros::NodeHandl
   command_pub_ = pnh_.advertise<trajectory_msgs::MultiDOFJointTrajectory>("command/trajectory", 1);
 }
 
-void DLA3TrajectorySampler::smoothTrajectory4DCallback(const mav_planning_msgs::PolynomialTrajectory4D::ConstPtr& p_msg) {
+void DLA3TrajectorySampler::smoothTrajectory4DCallback(const mav_planning_msgs::PolynomialTrajectory4D msg) {
   ROS_INFO("BEGIN: smoothTrajectory4DCallback(...)");
-  const mav_planning_msgs::PolynomialTrajectory4D &msg = *p_msg;
 
   if (msg.segments.empty()) {
     ROS_WARN("Trajectory sampler: received empty waypoint message");
