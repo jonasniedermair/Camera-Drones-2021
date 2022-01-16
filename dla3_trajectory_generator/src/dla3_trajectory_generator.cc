@@ -26,8 +26,8 @@ DLA3TrajectoryGenerator::DLA3TrajectoryGenerator(ros::NodeHandle& nh) :
                                                               0);
 
   // subscriber for Odometry
-  sub_odom_ =
-      nh.subscribe("uav_pose", 1, &DLA3TrajectoryGenerator::uavOdomCallback, this);
+  // sub_odom_ =
+  //     nh.subscribe("uav_pose", 1, &DLA3TrajectoryGenerator::uavOdomCallback, this);
 
   // subscriber for trajectory
   ROS_INFO("Subscribe to /planned_trajectory");
@@ -38,14 +38,31 @@ DLA3TrajectoryGenerator::DLA3TrajectoryGenerator(ros::NodeHandle& nh) :
 void DLA3TrajectoryGenerator::trajectoryCallback(const mav_planning_msgs::PolynomialTrajectory4D msg)
 {
   ROS_INFO("Trajectory message received!");
-  Eigen::Vector3d goal_position = Eigen::Vector3d(msg.segments.back().x[0],
-                                                   msg.segments.back().y[0],
-                                                   msg.segments.back().z[0]);
-
+  
+  // Get trajectory by message
   mav_trajectory_generation::Trajectory trajectory;
   mav_trajectory_generation::polynomialTrajectoryMsgToTrajectory(msg, &trajectory);
 
-  planTrajectory(goal_position, Eigen::Vector3d{}, &trajectory);
+  // Get trajectory segments
+  mav_trajectory_generation::Segment::Vector segments;
+  trajectory.getSegments(&segments);
+
+  std::vector<Eigen::VectorXd> positions;
+
+  // Get positions
+  for (int i = 0; i < segments.size(); i++)
+  {
+    Eigen::VectorXd tmp(3);
+    for (int j = 0; j < 3; ++j)
+      tmp(j) = segments[i][j].getCoefficients(mav_trajectory_generation::derivative_order::POSITION)(0);
+    positions.push_back(tmp);
+  }
+  
+  // Plan & publish trajectory
+  ROS_INFO("Plan trajectory");
+  planTrajectory(positions, &trajectory);
+   
+  ROS_INFO("Publish trajectory");
   publishTrajectory(trajectory);
 }
 
@@ -66,11 +83,13 @@ void DLA3TrajectoryGenerator::setMaxSpeed(const double max_v) {
 
 // Plans a trajectory from the current position to the a goal position and velocity
 // we neglect attitude here for simplicity
-bool DLA3TrajectoryGenerator::planTrajectory(const Eigen::VectorXd& goal_pos,
-                                    const Eigen::VectorXd& goal_vel,
-                                    mav_trajectory_generation::Trajectory* trajectory) {
+bool DLA3TrajectoryGenerator::planTrajectory(const std::vector<Eigen::VectorXd> positions, mav_trajectory_generation::Trajectory* trajectory) {
   // 3 Dimensional trajectory => through carteisan space, no orientation
   const int dimension = 3;
+
+  // Get start and goal position
+  auto start_position = positions[0];
+  auto goal_position = positions.back();
 
   // Array for all waypoints and their constrains
   mav_trajectory_generation::Vertex::Vector vertices;
@@ -87,25 +106,29 @@ bool DLA3TrajectoryGenerator::planTrajectory(const Eigen::VectorXd& goal_pos,
 
   /******* Configure start point *******/
   // set start point constraints to current position and set all derivatives to zero
-  start.makeStartOrEnd(current_pose_.translation(),
-                       derivative_to_optimize);
+  start.makeStartOrEnd(start_position, derivative_to_optimize);
 
-  // set start point's velocity to be constrained to current velocity
-  start.addConstraint(mav_trajectory_generation::derivative_order::VELOCITY,
-                      current_velocity_);
+  // Set start point velocity to 0.0 (hover state)
+  start.addConstraint(mav_trajectory_generation::derivative_order::VELOCITY, 0.0);
 
   // add waypoint to list
   vertices.push_back(start);
 
+  /******* Configure points between start and end point *******/
+  for (int i = 1; i < positions.size() - 1; i++)
+  {
+    mav_trajectory_generation::Vertex point_between(dimension);
+    point_between.addConstraint(mav_trajectory_generation::derivative_order::POSITION, positions[i]);
+    vertices.push_back(point_between);
+  }
 
   /******* Configure end point *******/
   // set end point constraints to desired position and set all derivatives to zero
-  end.makeStartOrEnd(goal_pos,
-                     derivative_to_optimize);
+  end.makeStartOrEnd(goal_position, derivative_to_optimize);
 
-  // set start point's velocity to be constrained to current velocity
-  end.addConstraint(mav_trajectory_generation::derivative_order::VELOCITY,
-                    goal_vel);
+
+  // set goal point velocity to 0.0 (hover state)
+  end.addConstraint(mav_trajectory_generation::derivative_order::VELOCITY, 0.0);
 
   // add waypoint to list
   vertices.push_back(end);
@@ -117,6 +140,7 @@ bool DLA3TrajectoryGenerator::planTrajectory(const Eigen::VectorXd& goal_pos,
   // Set up polynomial solver with default params
   mav_trajectory_generation::NonlinearOptimizationParameters parameters;
 
+  // Set non-linear optimization parameters
   parameters.algorithm = nlopt::LN_SBPLX;
   parameters.f_rel = 0.00005;
   parameters.time_alloc_method = mav_trajectory_generation::NonlinearOptimizationParameters::kSquaredTime;

@@ -6,7 +6,7 @@
   <arg name="node_name" default="trajectory_visualization_raw" />
   <arg name="input_topic" default="planned_trajectory_raw" />
   <arg name="output_topic" default="trajectory_markers_raw" />
-  <arg name="marker_color" default="O" />
+  <arg name="marker_color" default="R" />
 	<node pkg="dla2_path_planner" type="dla2_path_planner_trajectory_visualization" name="$(arg node_name)" 
 		args="" output="screen">
         <remap from="/path_planner/planned_trajectory" to="$(arg input_topic)" />

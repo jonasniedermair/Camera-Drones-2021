@@ -23,8 +23,7 @@ class DLA3TrajectoryGenerator {
 
   // Plans a trajectory to take off from the current position and
   // fly to the given altitude (while maintaining x,y, and yaw).
-  bool planTrajectory(const Eigen::VectorXd& goal_pos,
-                      const Eigen::VectorXd& goal_vel,
+  bool planTrajectory(const std::vector<Eigen::VectorXd> positions,
                       mav_trajectory_generation::Trajectory* trajectory);
                       
   bool planTrajectory(const Eigen::VectorXd& goal_pos,
