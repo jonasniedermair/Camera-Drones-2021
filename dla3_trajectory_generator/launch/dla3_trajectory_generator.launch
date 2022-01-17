@@ -7,13 +7,7 @@
         <!-- <remap from="uav_pose" to="odometry_sensor1/odometry"/> -->
     </node>
 
-    <!--- Trajectory sampler
-    <node name="sampler" pkg="mav_trajectory_generation_ros" type="trajectory_sampler_node" output="screen">
-        <remap from="path_segments_4D" to="/trajectory_generator/smooth_trajectory"/>
-    </node>
-    -->
 
-    <!--
-    <node type="rviz" name="rviz" pkg="rviz" args="-d $(find dla3_trajectory_generator)/cfg/rviz_view_$(arg mav_name).rviz" />
-    -->
+    <!-- Trajectory sampler -->
+    <node name="trajectory_sampler" pkg="dla3_trajectory_sampler" type="dla3_trajectory_sampler" output="screen" />
 </launch>
