@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
     <arg name="rvizconfig" default="$(find dla2_path_planner)/rviz/config.rviz" />
-    <arg name="map" default="$(find dla2_path_planner)/maps/power_plant.bt" />
+    <arg name="map" default="$(find dla2_path_planner)/maps/dronespace_synthetic.bt" />
     <arg name="bspline" default ="true" />
     <arg name="perturb" default ="true" />
 
@@ -15,4 +15,6 @@
         <param name="perturb" type="bool" value="$(arg perturb)" />
     </node>
 
+    <!-- Start trajectory sampler -->
+    <node name="trajectory_sampler" pkg="dla3_trajectory_sampler" type="dla3_trajectory_sampler" output="screen" />
 </launch>

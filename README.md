@@ -99,8 +99,12 @@ roslaunch dla2_path_planner trajectory_visualization.launch
 
 Run trajectory_visualization of the simplified path:
 ```
-roslaunch dla2_path_planner trajectory_visualization.launch node_name:="trajectory_visualization" input_topic:="planned_trajectory" output_topic:="trajectory_markers" marker_color:="W"
+roslaunch dla2_path_planner trajectory_visualization.launch node_name:="trajectory_visualization" input_topic:="/path_planner/planned_trajectory" output_topic:="trajectory_markers" marker_color:="W"
+```
 
+Run trajectory_generator:
+```
+roslaunch dla3_trajectory_generator dla3_trajectory_generator.launch
 ```
 
 Set up the starting point
@@ -142,5 +146,17 @@ Constraints:
         * snap
     affect velocity at the beginning and end.
     * Record a bunch of videos of this.
+
+# 4. Assignment
+For the 4th assignment it was necessary to rename the topic names. So make sure that you use the correct topic names in RViz.
+
+The commands to start the application are the same as in assignment 3.
+
+/planned_trajectory --> /path_planner/planned_trajectory
+/planned_trajectory_raw --> /path_planner/planned_trajectory_raw
+/smooth_trajectory4d --> /trajectory_generator/smooth_trajectory
+/trajectory_markers --> /trajectory_generator/smooth_trajectory_markers
+/trajectory_visualization/trajectory_markers --> /trajectory_visualization/trajectory_markers
+/trajectory_visualization_raw/trajectory_markers_raw --> /trajectory_visualization_raw/trajectory_markers_raw
 
 
