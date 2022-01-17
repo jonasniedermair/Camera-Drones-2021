@@ -20,7 +20,7 @@ DLA3TrajectorySampler::DLA3TrajectorySampler(ros::NodeHandle& nh, ros::NodeHandl
   pnh_.param("dt", dt_, dt_);
 
   smooth_trajectory4d_sub = pnh_.subscribe<mav_planning_msgs::PolynomialTrajectory4D>(
-    "/smooth_trajectory4d", 10,
+    "/trajectory_generator/smooth_trajectory", 10,
     &DLA3TrajectorySampler::smoothTrajectory4DCallback, this);
   
   const bool oneshot = false;
