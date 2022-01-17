@@ -321,7 +321,7 @@ inline void plan() {
 
       og::PathSimplifier simplifier(si, ompl::base::GoalPtr(), optimizationObjective);
     
-      og::PathGeometric *path = new og::PathGeometric(*p_raw_last_traj_ompl); 
+      auto *path = new og::PathGeometric(*p_raw_last_traj_ompl);
       double avg_costs = 0;
       ob::Cost original_cost = p_raw_last_traj_ompl->cost(optimizationObjective);
 
@@ -378,20 +378,22 @@ inline void plan() {
     plan();
 
     if (traj_planning_successful) {
-      sendLastMessage(last_traj_msg, p_last_traj_ompl);
+      populateSegments(last_traj_msg, p_last_traj_ompl);
       mav_planning_msgs::PolynomialTrajectory4D::Ptr p_traj_msg =
           mav_planning_msgs::PolynomialTrajectory4D::Ptr(new mav_planning_msgs::PolynomialTrajectory4D(last_traj_msg));
       trajectory_pub.publish(p_traj_msg);
 
-      sendLastMessage(raw_last_traj_msg, p_raw_last_traj_ompl);
+      populateSegments(raw_last_traj_msg, p_raw_last_traj_ompl);
       mav_planning_msgs::PolynomialTrajectory4D::Ptr p_raw_traj_msg =
           mav_planning_msgs::PolynomialTrajectory4D::Ptr(new mav_planning_msgs::PolynomialTrajectory4D(raw_last_traj_msg));
       // TODO: Is this correct?
+
+      std::cout << "Raw: " << p_raw_traj_msg->segments.size() << " vs Simplified: " << p_traj_msg->segments.size() << std::endl;
       trajectory_raw_pub.publish(p_raw_traj_msg);
     }
   }
 
-  inline void sendLastMessage(mav_planning_msgs::PolynomialTrajectory4D& trajectory, const std::shared_ptr<ompl::geometric::PathGeometric>& path) {
+  inline void populateSegments(mav_planning_msgs::PolynomialTrajectory4D& trajectory, const std::shared_ptr<ompl::geometric::PathGeometric>& path) {
     mav_planning_msgs::PolynomialTrajectory4D &msg = trajectory;
     msg.segments.clear();
     msg.header.stamp = ros::Time::now();
@@ -474,7 +476,7 @@ int main(int argc, char *argv[]) {
   visualization_msgs::Marker marker;
 
   while (true) {
-//    dla3_path_planner.sendLastMessage();
+//    dla3_path_planner.populateSegments();
     ros::spinOnce();
   }
 

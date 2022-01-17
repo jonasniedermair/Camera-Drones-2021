@@ -55,7 +55,7 @@ private:
   double max_a_; // m/s^2
   double max_ang_v_;
   double max_ang_a_;
-  bool raw{};
+  bool raw;
 };
 
 #endif // MAV_TRAJECTORY_GENERATION_EXAMPLE_PLANNER_H

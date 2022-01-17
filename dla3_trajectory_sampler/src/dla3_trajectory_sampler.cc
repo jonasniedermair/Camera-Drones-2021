@@ -84,6 +84,12 @@ void DLA3TrajectorySampler::commandTimerCallback(const ros::TimerEvent&) {
     msg.header.frame_id = "world";
     std::string child_frame_id("state_ref");
     msg.header.stamp = current_ideal_time_;
+
+    auto v = msg.points[0].velocities[0].linear;
+    auto a = msg.points[0].velocities[0].angular;
+    msg.points[0].velocities[0].linear.x = std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+    msg.points[0].velocities[0].linear.y = std::sqrt(a.x * a.x + a.y * a.y + a.z * a.z);
+
     command_pub_.publish(msg);
     current_sample_time_ += dt_;
 

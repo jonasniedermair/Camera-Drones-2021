@@ -119,6 +119,9 @@ NOTE: world is the base frame
 
 Planner parameter analysis:
 
+
+roslaunch launch/path_planning.launch bspline:="true" perturb:="true"
+
 Scenario #1:
     * simplified + bspline + perturb
 
@@ -139,6 +142,5 @@ Constraints:
         * snap
     affect velocity at the beginning and end.
     * Record a bunch of videos of this.
- 
 
 

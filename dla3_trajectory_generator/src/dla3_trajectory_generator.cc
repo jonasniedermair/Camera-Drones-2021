@@ -7,7 +7,8 @@ DLA3TrajectoryGenerator::DLA3TrajectoryGenerator(ros::NodeHandle& nh) :
     max_v_(2.0),
     max_a_(2.0),
     current_velocity_(Eigen::Vector3d::Zero()),
-    current_pose_(Eigen::Affine3d::Identity()) {
+    current_pose_(Eigen::Affine3d::Identity()),
+    raw(false) {
       
   // Load params
   if (!nh_.getParam(ros::this_node::getName() + "/max_v", max_v_)){
@@ -29,7 +30,7 @@ DLA3TrajectoryGenerator::DLA3TrajectoryGenerator(ros::NodeHandle& nh) :
       nh.advertise<mav_planning_msgs::PolynomialTrajectory4D>("smooth_trajectory4d",
                                                               0);
 
-//   subscriber for Odometry
+  // subscriber for Odometry
    sub_odom_ =
        nh.subscribe("uav_pose", 1, &DLA3TrajectoryGenerator::uavOdomCallback, this);
 
