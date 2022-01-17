@@ -9,5 +9,5 @@
 
 
     <!-- Trajectory sampler -->
-    <node name="trajectory_sampler" pkg="dla3_trajectory_sampler" type="dla3_trajectory_sampler" output="screen" />
+    <!-- <node name="trajectory_sampler" pkg="dla3_trajectory_sampler" type="dla3_trajectory_sampler" output="screen" /> -->
 </launch>
