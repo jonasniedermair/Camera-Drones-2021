@@ -107,6 +107,11 @@ Run trajectory_generator:
 roslaunch dla3_trajectory_generator dla3_trajectory_generator.launch
 ```
 
+Run the trajectory sampler:
+```
+roslaunch dla3_trajectory_sampler dla3_trajectory_sampler.launch
+```
+
 Set up the starting point
 ```
 rostopic pub current_position geometry_msgs/Point -- 0.0 0.0 3.0
@@ -150,8 +155,6 @@ Constraints:
 # 4. Assignment
 For the 4th assignment it was necessary to rename the topic names. So make sure that you use the correct topic names in RViz.
 
-The commands to start the application are the same as in assignment 3.
-
 /planned_trajectory --> /path_planner/planned_trajectory
 /planned_trajectory_raw --> /path_planner/planned_trajectory_raw
 /smooth_trajectory4d --> /trajectory_generator/smooth_trajectory
@@ -159,4 +162,5 @@ The commands to start the application are the same as in assignment 3.
 /trajectory_visualization/trajectory_markers --> /trajectory_visualization/trajectory_markers
 /trajectory_visualization_raw/trajectory_markers_raw --> /trajectory_visualization_raw/trajectory_markers_raw
 
+Note: The commands to start the application are the same as in assignment 3.
 
