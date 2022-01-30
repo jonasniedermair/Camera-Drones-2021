@@ -1,16 +1,17 @@
 <?xml version="1.0"?>
 <launch>
-<!--     <arg name="rvizconfig" default="$(find dla2_path_planner)/rviz/config.rviz" /> -->
-    <arg name="map" default="$(find dla2_path_planner)/maps/power_plant.bt" />
+    <arg name="rvizconfig" default="$(find dla2_path_planner)/rviz/config.rviz" />
+    <arg name="map" default="$(find dla2_path_planner)/maps/dronespace_synthetic.bt" />
+    <arg name="bspline" default ="true" />
+    <arg name="perturb" default ="true" />
 
     
     <!-- RViz -->
-<!--     <node pkg="rviz" name="rviz" type="rviz" output="screen" args="-d $(arg rvizconfig)"/> -->
+    <node pkg="rviz" name="rviz" type="rviz" output="screen" args="-d $(arg rvizconfig)"/>
     
     <!-- Path planning -->
     <node pkg="dla2_path_planner" name="exampleEDTOctomap" type="dla2_path_planner_exampleEDTOctomap" output="screen" args="$(arg map)">
-            <param name="bspline" type="bool" value="$(arg bspline)" />
-            <param name="perturb" type="bool" value="$(arg perturb)" />
+        <param name="bspline" type="bool" value="$(arg bspline)" />
+        <param name="perturb" type="bool" value="$(arg perturb)" />
     </node>
-
 </launch>

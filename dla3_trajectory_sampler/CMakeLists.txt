@@ -14,6 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
         tf REQUIRED
         )
 
+catkin_package()        
+
 include_directories(
         ${catkin_INCLUDE_DIRS}
 )

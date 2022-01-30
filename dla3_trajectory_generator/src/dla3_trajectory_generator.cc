@@ -24,10 +24,10 @@ DLA3TrajectoryGenerator::DLA3TrajectoryGenerator(ros::NodeHandle& nh) :
 
   // create publisher for RVIZ markers
   pub_markers_ =
-      nh.advertise<visualization_msgs::MarkerArray>("trajectory_markers", 0);
+      nh.advertise<visualization_msgs::MarkerArray>("/trajectory_generator/smooth_trajectory_markers", 0);
 
   pub_trajectory_ =
-      nh.advertise<mav_planning_msgs::PolynomialTrajectory4D>("smooth_trajectory4d",
+      nh.advertise<mav_planning_msgs::PolynomialTrajectory4D>("/trajectory_generator/smooth_trajectory",
                                                               0);
 
   // subscriber for Odometry
@@ -35,8 +35,8 @@ DLA3TrajectoryGenerator::DLA3TrajectoryGenerator(ros::NodeHandle& nh) :
        nh.subscribe("uav_pose", 1, &DLA3TrajectoryGenerator::uavOdomCallback, this);
 
   // subscriber for trajectory
-  ROS_INFO("Subscribe to /planned_trajectory");
-  sub_trajectory_ = nh_.subscribe("/planned_trajectory" + std::string(raw ? "_raw" : ""), 10, &DLA3TrajectoryGenerator::trajectoryCallback, this);
+  ROS_INFO("Subscribe to /path_planner/planned_trajectory");
+  sub_trajectory_ = nh_.subscribe("/path_planner/planned_trajectory" + std::string(raw ? "_raw" : ""), 10, &DLA3TrajectoryGenerator::trajectoryCallback, this);
     
 }
 
